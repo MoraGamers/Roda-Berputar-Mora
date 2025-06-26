@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin & Win!</title>
+    <style>
+        /* CSS untuk Bintik-bintik Bintang - Disesuaikan untuk Performa & Gerak */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #000; /* Latar belakang hitam */
+            color: #ecf0f1;
+            margin: 0;
+            overflow: hidden;
+            position: relative; /* Penting untuk pseudo-element */
+        }
+        /* Efek bintang dengan pseudo-element: Lebih efisien rendering dan bergerak */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 80px 100px, #eee, rgba(0,0,0,0)),
+                radial-gradient(3px 3px at 150px 70px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 200px 120px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 250px 50px, #eee, rgba(0,0,0,0)),
+                radial-gradient(3px 3px at 300px 90px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 350px 20px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 400px 110px, #eee, rgba(0,0,0,0)),
+                radial-gradient(3px 3px at 450px 80px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 50px 150px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 100px 180px, #eee, rgba(0,0,0,0)),
+                radial-gradient(3px 3px at 180px 130px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 220px 170px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 280px 140px, #eee, rgba(0,0,0,0)),
+                radial-gradient(3px 3px at 320px 190px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 380px 160px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 420px 200px, #eee, rgba(0,0,0,0)),
+                radial-gradient(3px 3px at 480px 10px, #eee, rgba(0,0,0,0));
+            background-size: 500px 200px; /* Ukuran pola bintang */
+            z-index: -1; /* Pastikan berada di belakang konten */
+            animation: moveStars 60s linear infinite; /* Animasi pergerakan bintang */
+        }
+
+        /* Keyframe untuk animasi pergerakan bintang */
+        @keyframes moveStars {
+            from { background-position: 0 0; }
+            to { background-position: 500px 0; } /* Menggeser sejauh ukuran background-size horizontal */
+        }
+
+
+        .container { background-color: rgba(52, 73, 94, 0.9);
+            padding: 30px; border-radius: 10px; box-shadow: 0 0 25px rgba(0, 0, 0, 0.5); text-align: center; width: 90%; max-width: 600px; }
+
+        .main-title {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.7);
+            animation: rgb-color-blink 1.5s infinite alternate;
+            will-change: color;
+        }
+        @keyframes rgb-color-blink {
+            0% { color: #f00; }
+            20% { color: #ff0; }
+            40% { color: #0f0; }
+            60% { color: #0ff; }
+            80% { color: #00f; }
+            100% { color: #f0f; }
+        }
+
+        /* VIP Marquee Text */
+        #vipMessage {
+            color: #FFD700; /* Gold color */
+            font-size: 1.2em;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(255,215,0,0.8);
+            white-space: nowrap;
+            overflow: hidden;
+            box-sizing: border-box;
+            width: 100%;
+            padding: 5px 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            margin-bottom: 15px;
+            display: none; /* Default hidden, shown by JS */
+        }
+
+        #vipMessage span {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 15s linear infinite; /* Speed adjusted */
+        }
+
+        @keyframes marquee {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+
+
+        .menu-top { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .menu-top button { background-color: #3498db; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 0.9em; transition: background-color 0.3s ease; }
+        .menu-top button:hover { background-color: #2980b9; }
+        #coinDisplay { font-size: 1.5em; font-weight: bold; color: #2ecc71; margin-bottom: 20px; }
+        #highestSpinEarningsDisplay, #currentRankDisplay, #highestRankDisplay {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #f1c40f; /* Yellowish color for these new stats */
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+
+        .roulette-container { position: relative; width: 300px; height: 300px; border-radius: 50%; border: 10px solid #f39c12; margin: 30px auto; overflow: hidden; box-sizing: content-box; }
+        #spinner { width: 100%; height: 100%; position: absolute; top: 0; left: 0; transition: transform 4s cubic-bezier(0.25, 0.1, 0.25, 1); will-change: transform; }
+        .slice { position: absolute; width: 50%; height: 50%; top: 0; left: 50%; transform-origin: 0% 100%; border: 1px solid rgba(0,0,0,0.2); box-sizing: border-box; }
+        .slice span { position: absolute; left: -100%; top: 50%; transform: skewY(72deg) rotate(9deg); transform-origin: 100% 0%; text-align: center; width: 200%; padding-left: 25px; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); font-size: 0.9em; white-space: nowrap; }
+
+        /* New: Golden Wheel Color - Dihilangkan atau diabaikan jika hanya ada 1 item VIP */
+        /* .golden-wheel.roulette-container {
+            border-color: #B8860B;
+        }
+        .golden-wheel .slice {
+            background: linear-gradient(45deg, #FFD700, #DAA520);
+            border-color: #B8860B;
+        }
+        .golden-wheel .slice span {
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+        } */
+
+        .arrow { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 30px solid #c0392b; z-index: 10; }
+
+        .controls { margin-top: 30px; display: flex; justify-content: center; align-items: center; flex-wrap: wrap;} /* Updated for new button */
+        .controls input { padding: 10px; border-radius: 5px; border: 1px solid #7f8c8d; background-color: #ecf0f1; color: #2c3e50; width: 150px; text-align: center; margin-bottom: 10px;} /* Updated for new button */
+        .controls button { background-color: #e67e22; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-size: 1.1em; transition: background-color 0.3s ease; margin-left: 10px; margin-bottom: 10px;} /* Updated for new button */
+        .controls button:hover { background-color: #d35400; }
+        .controls button:disabled { background-color: #7f8c8d; cursor: not-allowed; }
+
+        /* New button for Max Bet */
+        .controls #maxBetButton {
+            background-color: #f1c40f; /* Kuning */
+            color: #2c3e50;
+            margin-left: 10px;
+            padding: 10px 15px; /* Sedikit lebih kecil dari spin button */
+            font-size: 0.9em;
+        }
+        .controls #maxBetButton:hover { background-color: #f39c12; }
+
+
+        #result { margin-top: 20px; font-size: 1.3em; font-weight: bold; color: #fff; }
+        .message.success { color: #2ecc71; }
+        .message.error { color: #e74c3c; }
+
+        /* General Page Styling for Redeem/Topup/Shop */
+        .page { display: none; background-color: rgba(52, 73, 94, 0.9); padding: 20px; border-radius: 8px; margin-top: 20px; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); }
+        .page h2 { color: #f1c40f; margin-bottom: 20px; }
+        .page .form-group { margin-bottom: 15px; text-align: center; }
+        .page .form-group label { display: block; margin-bottom: 5px; color: #ccc; }
+        .page .form-group input { width: calc(100% - 40px); padding: 10px; border: 1px solid #7f8c8d; background-color: #ecf0f1; color: #2c3e50; border-radius: 5px; font-size: 1em; }
+        .page button { background-color: #2ecc71; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1em; transition: background-color 0.3s ease; margin-top: 10px; }
+        .page button:hover { background-color: #27ae60; }
+        .page .back-button { position: static; margin-top: 20px; background-color: #95a5a6 !important; }
+        .page .back-button:hover { background-color: #7f8c8d !important; }
+
+        .copyright {
+            margin-top: 30px;
+            font-size: 0.8em;
+            color: #7f8c8d;
+        }
+
+        /* Shop Specific Styling */
+        #shopItemsContainer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .shop-item {
+            background-color: rgba(0, 0, 0, 0.4);
+            border: 1px solid #f1c40f;
+            border-radius: 8px;
+            padding: 15px;
+            width: 180px;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .shop-item h3 {
+            color: #2ecc71;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .shop-item p {
+            font-size: 0.9em;
+            color: #ccc;
+            margin-bottom: 10px;
+            flex-grow: 1; /* Make description take available space */
+        }
+        .shop-item .price {
+            font-weight: bold;
+            color: #f1c40f;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+        .shop-item button {
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 90%;
+        }
+        .shop-item button:hover {
+            background-color: #d35400;
+        }
+        .shop-item button:disabled {
+            background-color: #7f8c8d;
+            cursor: not-allowed;
+        }
+        .shop-item .owned-text {
+            color: #2ecc71;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+
+        /* Responsiveness */
+        @media (max-width: 480px) {
+            .container { padding: 20px; }
+            .main-title { font-size: 1.8em; }
+            .roulette-container { width: 250px; height: 250px; }
+            .controls input { width: 100%; margin-left: 0; }
+            .controls button { padding: 10px 20px; font-size: 1em; margin-left: 0; margin-top: 10px; }
+            .controls #maxBetButton { margin-left: 0; margin-top: 10px;}
+            .slice span { font-size: 0.8em; padding-left: 15px; }
+            .shop-item { width: 140px; padding: 10px; }
+            .shop-item h3 { font-size: 1em; }
+            .shop-item p { font-size: 0.8em; }
+            .shop-item .price { font-size: 1em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-title">Roda Keberuntungan Mora</div>
+
+        <div id="vipMessage">
+            <span>Anggota VIP 1000 yang terhormat</span>
+        </div>
+
+        <div class="menu-top">
+            <button onclick="showPage('mainGamePage')">Game</button>
+            <button onclick="showPage('redeemPage')">Redeem</button>
+            <button onclick="showPage('topUpPage')">Top Up</button>
+            <button onclick="showPage('shopPage')">Toko</button> 
+        </div>
+
+        <p>Coin Anda: <span id="coinDisplay">10000</span></p>
+        <p>Uang Tertinggi Terkumpul (per putaran): <span id="highestSpinEarningsDisplay">0</span></p>
+        <p>Rank Saat Ini: <span id="currentRankDisplay">Pemula</span></p>
+        <p>Rank Tertinggi: <span id="highestRankDisplay">Pemula</span></p>
+
+        <div id="mainGamePage">
+            <div class="roulette-container">
+                <div id="spinner"></div>
+                <div class="arrow"></div>
+            </div>
+
+            <div class="controls">
+                <input type="number" id="betInput" placeholder="Jumlah Taruhan" value="2000" min="100">
+                <button id="maxBetButton">MAX BET</button>
+                <button id="spinButton">SPIN!</button>
+            </div>
+            <p id="result" class="message"></p>
+        </div>
+
+        <div id="redeemPage" class="page">
+            <h2>Redeem Kode</h2>
+            <div class="form-group">
+                <label for="redeemCodeInput">Masukkan Kode Redeem:</label>
+                <input type="text" id="redeemCodeInput" placeholder="Kode Redeem">
+            </div>
+            <button id="redeemSubmit">Redeem Sekarang</button>
+            <p id="redeemMessage" class="message"></p>
+            <button class="back-button" onclick="showPage('mainGamePage')">Kembali</button>
+        </div>
+
+        <div id="topUpPage" class="page">
+            <h2>Top Up Coin</h2>
+            <div class="form-group">
+                <label for="topUpAmount">Jumlah Top Up:</label>
+                <input type="number" id="topUpAmount" placeholder="Contoh: 10000" value="10000" min="1000">
+            </div>
+            <button id="topUpSubmit">Top Up!</button>
+            <p id="topUpMessage" class="message"></p>
+            <button class="back-button" onclick="showPage('mainGamePage')">Kembali</button>
+        </div>
+
+        <div id="shopPage" class="page"> 
+            <h2>Toko Item Keberuntungan</h2>
+            <p id="shopMessage" class="message"></p>
+            <div id="shopItemsContainer">
+                
+            </div>
+            <button class="back-button" onclick="showPage('mainGamePage')">Kembali</button>
+        </div>
+
+        <div class="copyright">
+            &copy; 2025 Roda Keberuntungan Mora. All rights reserved.
+        </div>
+    </div>
+    <script>
+        // --- Konfigurasi Awal & Elemen DOM ---
+        let currentCoins = 10000n; // Menggunakan BigInt untuk koin
+        let isSpinning = false;
+        let hasRedeemedMoraKaya = false;
+        let highestSpinEarnings = 0n; // Menggunakan BigInt
+        let totalSpinWinnings = 0n;   // Menggunakan BigInt
+        let highestAchievedRank = 'Pemula'; // Rank tertinggi yang pernah dicapai
+
+        // Variabel untuk fitur toko
+        let activeLuckBoostRounds = 0; // Jumlah putaran sisa untuk Kapsul Keberuntungan (dihilangkan untuk VIP, tapi saya biarkan kalau ada rencana lain)
+        // let isGoldenWheelActive = false; // Dihilangkan karena hanya ada item VIP
+        let boughtItems = {}; // Menyimpan item yang sudah dibeli { itemId: true/false }
+        let isVIPActive = false; // Status apakah VIP aktif
+
+        // Kunci Local Storage
+        const LS_COINS_KEY = 'moraGameCoins';
+        const LS_REDEEM_KEY = 'moraGameRedeemMoraKaya';
+        const LS_HIGHEST_EARNINGS_KEY = 'moraGameHighestSpinEarnings';
+        const LS_TOTAL_WINNINGS_KEY = 'moraGameTotalSpinWinnings';
+        const LS_HIGHEST_RANK_KEY = 'moraGameHighestRank';
+        const LS_LUCK_BOOST_ROUNDS_KEY = 'moraGameLuckBoostRounds'; 
+        // const LS_GOLDEN_WHEEL_KEY = 'moraGameGoldenWheel'; // Dihilangkan
+        const LS_BOUGHT_ITEMS_KEY = 'moraGameBoughtItems';         
+        const LS_VIP_STATUS_KEY = 'moraGameVIPStatus'; // New LS Key
+
+
+        // Hadiah: 14 slot (7 kemenangan, 7 zonk = 50% probabilitas zonk)
+        const prizes = [
+            { type: 'multiplier', value: 2, label: 'x2' },
+            { type: 'multiplier', value: 10, label: 'x10' },
+            { type: 'multiplier', value: 8, label: 'x8' },
+            { type: 'multiplier', value: 20, label: 'x20' },
+            { type: 'multiplier', value: 1, label: 'x1' },
+            { type: 'multiplier', value: 7, label: 'x7' },
+            { type: 'bonus', value: 10000, label: '+10K Coin' },
+            // 7 slot ZONK untuk probabilitas 50%
+            { type: 'zonk', value: 0, label: 'ZONK' },
+            { type: 'zonk', value: 0, label: 'ZONK' },
+            { type: 'zonk', value: 0, label: 'ZONK' },
+            { type: 'zonk', value: 0, label: 'ZONK' },
+            { type: 'zonk', value: 0, label: 'ZONK' },
+            { type: 'zonk', value: 0, label: 'ZONK' },
+            { type: 'zonk', value: 0, label: 'ZONK' }
+        ];
+        const sliceColors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6'];
+
+        // Definisi Rank (total 25 rank, 19 baru di atas Dewa Koin)
+        // Ambang batas adalah totalSpinWinnings, menggunakan BigInt
+        const ranks = [
+            { name: 'Pemula', threshold: 0n },
+            { name: 'Penjelajah Koin', threshold: 100_000n },
+            { name: 'Pedagang Kaya', threshold: 1_000_000n },
+            { name: 'Jutawan Spin', threshold: 100_000_000n },
+            { name: 'Konglomerat Mora', threshold: 10_000_000_000n }, // 10 Miliar
+            { name: 'Dewa Koin', threshold: 9_000_000_000_000n }, // 9 Triliun
+
+            // 19 Rank Baru di atas Dewa Koin
+            { name: 'Sultan Semesta', threshold: 20_000_000_000_000n }, // 20 Triliun
+            { name: 'Monarki Galaksi', threshold: 50_000_000_000_000n }, // 50 Triliun
+            { name: 'Pangeran Angkasa', threshold: 100_000_000_000_000n }, // 100 Triliun
+            { name: 'Raja Bintang', threshold: 200_000_000_000_000n },
+            { name: 'Kaisar Kosmik', threshold: 500_000_000_000_000n },
+            { name: 'Legenda Roda', threshold: 1_000_000_000_000_000n }, // 1 Kuadriliun
+            { name: 'Penguasa Keberuntungan', threshold: 2_000_000_000_000_000n },
+            { name: 'Master Dimensi', threshold: 5_000_000_000_000_000n },
+            { name: 'Penguasa Multiverse', threshold: 10_000_000_000_000_000n },
+            { name: 'Yang Tak Terkalahkan', threshold: 20_000_000_000_000_000n },
+            { name: 'Spinner Abadi', threshold: 50_000_000_000_000_000n },
+            { name: 'Abadi Sejati', threshold: 100_000_000_000_000_000n },
+            { name: 'Penakluk Takdir', threshold: 200_000_000_000_000_000n },
+            { name: 'Pencipta Koin', threshold: 500_000_000_000_000_000n },
+            { name: 'Alpha Omega', threshold: 1_000_000_000_000_000_000n }, // 1 Kuintiliun
+            { name: 'Grand Supreme', threshold: 2_000_000_000_000_000_000n },
+            { name: 'Ultimate Deity', threshold: 5_000_000_000_000_000_000n },
+            { name: 'Apex Predator', threshold: 10_000_000_000_000_000_000n },
+            { name: 'Master of Infinity', threshold: 20_000_000_000_000_000_000n } // Rank Paling Tinggi
+        ];
+
+        // Item-item Toko (Hanya VIP 1000)
+        const shopItems = [
+            {
+                id: 'vip1000',
+                name: 'VIP 1000',
+                description: 'Dapatkan status keanggotaan VIP eksklusif dan keuntungan tak terbatas!',
+                price: 100_000_000_000_000n, // 100 Triliun, BigInt
+                type: 'permanent', // Sekali beli, permanen
+                effect: (player) => { player.isVIPActive = true; }
+            }
+        ];
+
+
+        // DOM elements
+        const elements = {
+            spinner: document.getElementById('spinner'),
+            spinButton: document.getElementById('spinButton'),
+            betInput: document.getElementById('betInput'),
+            maxBetButton: document.getElementById('maxBetButton'),
+            resultDisplay: document.getElementById('result'),
+            coinDisplay: document.getElementById('coinDisplay'),
+            highestSpinEarningsDisplay: document.getElementById('highestSpinEarningsDisplay'),
+            currentRankDisplay: document.getElementById('currentRankDisplay'),
+            highestRankDisplay: document.getElementById('highestRankDisplay'),
+            mainGamePage: document.getElementById('mainGamePage'),
+            redeemPage: document.getElementById('redeemPage'),
+            topUpPage: document.getElementById('topUpPage'),
+            shopPage: document.getElementById('shopPage'),
+            redeemCodeInput: document.getElementById('redeeemCodeInput'),
+            redeemMessage: document.getElementById('redeemMessage'),
+            topUpAmountInput: document.getElementById('topUpAmount'),
+            topUpMessage: document.getElementById('topUpMessage'),
+            shopItemsContainer: document.getElementById('shopItemsContainer'),
+            shopMessage: document.getElementById('shopMessage'),
+            rouletteContainer: document.querySelector('.roulette-container'), 
+            vipMessage: document.getElementById('vipMessage'), // New VIP message element
+        };
+        // --- Fungsi Utility & Logika Game ---
+
+        // Mengelola Local Storage
+        function saveGameData() {
+            localStorage.setItem(LS_COINS_KEY, currentCoins.toString());
+            localStorage.setItem(LS_REDEEM_KEY, hasRedeemedMoraKaya.toString());
+            localStorage.setItem(LS_HIGHEST_EARNINGS_KEY, highestSpinEarnings.toString());
+            localStorage.setItem(LS_TOTAL_WINNINGS_KEY, totalSpinWinnings.toString());
+            localStorage.setItem(LS_HIGHEST_RANK_KEY, highestAchievedRank);
+            // Simpan data toko & VIP
+            // localStorage.setItem(LS_LUCK_BOOST_ROUNDS_KEY, activeLuckBoostRounds.toString()); // Dihilangkan
+            // localStorage.setItem(LS_GOLDEN_WHEEL_KEY, isGoldenWheelActive.toString()); // Dihilangkan
+            localStorage.setItem(LS_BOUGHT_ITEMS_KEY, JSON.stringify(boughtItems));
+            localStorage.setItem(LS_VIP_STATUS_KEY, isVIPActive.toString()); // Save VIP status
+        }
+
+        function loadGameData() {
+            // Menggunakan BigInt() untuk mengonversi string dari Local Storage
+            currentCoins = BigInt(localStorage.getItem(LS_COINS_KEY) || '10000');
+            hasRedeemedMoraKaya = (localStorage.getItem(LS_REDEEM_KEY) === 'true');
+            highestSpinEarnings = BigInt(localStorage.getItem(LS_HIGHEST_EARNINGS_KEY) || '0');
+            totalSpinWinnings = BigInt(localStorage.getItem(LS_TOTAL_WINNINGS_KEY) || '0');
+            highestAchievedRank = localStorage.getItem(LS_HIGHEST_RANK_KEY) || 'Pemula';
+            // Muat data toko & VIP
+            activeLuckBoostRounds = parseInt(localStorage.getItem(LS_LUCK_BOOST_ROUNDS_KEY) || '0'); // Biarkan jika ada rencana item consumable
+            // isGoldenWheelActive = (localStorage.getItem(LS_GOLDEN_WHEEL_KEY) === 'true'); // Dihilangkan
+            boughtItems = JSON.parse(localStorage.getItem(LS_BOUGHT_ITEMS_KEY) || '{}');
+            isVIPActive = (localStorage.getItem(LS_VIP_STATUS_KEY) === 'true'); // Load VIP status
+
+            updateAllDisplays(); // Memperbarui semua tampilan setelah memuat data
+        }
+
+        // Mengelola Tampilan Halaman
+        function showPage(pageId) {
+            // Sembunyikan semua halaman yang relevan
+            elements.mainGamePage.style.display = 'none';
+            elements.redeemPage.style.display = 'none';
+            elements.topUpPage.style.display = 'none';
+            elements.shopPage.style.display = 'none'; 
+
+            // Tampilkan halaman yang diminta
+            document.getElementById(pageId).style.display = 'block';
+
+            // Bersihkan pesan-pesan
+            elements.resultDisplay.textContent = '';
+            elements.redeemMessage.textContent = '';
+            elements.topUpMessage.textContent = '';
+            elements.shopMessage.textContent = ''; 
+
+            // Jika masuk ke halaman toko, render ulang item
+            if (pageId === 'shopPage') {
+                renderShopItems();
+            }
+        }
+
+        function updateCoinDisplay() { 
+            // Menggunakan .toString() sebelum .toLocaleString() karena toLocaleString() tidak mendukung BigInt secara langsung di semua lingkungan
+            elements.coinDisplay.textContent = currentCoins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); 
+        }
+        function updateHighestSpinEarningsDisplay() { 
+            elements.highestSpinEarningsDisplay.textContent = highestSpinEarnings.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); 
+        }
+        function updateRankDisplays() {
+            const currentRank = getCurrentRank();
+            elements.currentRankDisplay.textContent = currentRank.name;
+            elements.highestRankDisplay.textContent = highestAchievedRank;
+            
+            // Tampilkan/sembunyikan pesan VIP
+            if (elements.vipMessage) {
+                elements.vipMessage.style.display = isVIPActive ? 'block' : 'none';
+            }
+        }
+
+        function updateAllDisplays() {
+            updateCoinDisplay();
+            updateHighestSpinEarningsDisplay();
+            updateRankDisplays();
+            // Tidak ada lagi indikator boost atau golden wheel
+        }
+
+        // Logika Rank
+        function getCurrentRank() {
+            let currentRank = ranks[0];
+            for (let i = 0; i < ranks.length; i++) {
+                // Bandingkan BigInt dengan BigInt
+                if (totalSpinWinnings >= ranks[i].threshold) {
+                    currentRank = ranks[i];
+                } else {
+                    break; 
+                }
+            }
+            return currentRank;
+        }
+
+        function checkAndUpdateHighestRank() {
+            const currentRank = getCurrentRank();
+            const currentRankIndex = ranks.findIndex(r => r.name === currentRank.name);
+            const highestRankIndex = ranks.findIndex(r => r.name === highestAchievedRank);
+
+            if (currentRankIndex > highestRankIndex) {
+                highestAchievedRank = currentRank.name;
+                // Opsional: berikan notifikasi bahwa rank naik
+                // alert(`Selamat! Anda naik rank menjadi ${highestAchievedRank}!`);
+            }
+        }
+
+
+        // Membuat Slices Roda (disimpan agar tidak error, tapi tidak akan ada golden wheel lagi)
+        function createRouletteSlices() {
+            elements.spinner.innerHTML = '';
+            const sliceAngle = 360 / prizes.length;
+
+            // Logika Golden Wheel dihapus karena hanya ada item VIP
+            // if (elements.rouletteContainer) {
+            //     if (isGoldenWheelActive) {
+            //         elements.rouletteContainer.classList.add('golden-wheel');
+            //     } else {
+            //         elements.rouletteContainer.classList.remove('golden-wheel');
+            //     }
+            // }
+            
+            prizes.forEach((prize, index) => {
+                const slice = document.createElement('div');
+                slice.className = 'slice';
+                slice.style.transform = `rotate(${index * sliceAngle}deg) skewY(-${90 - sliceAngle / 2}deg)`;
+                slice.style.backgroundColor = sliceColors[index % sliceColors.length];
+
+                const span = document.createElement('span');
+                span.textContent = prize.label;
+                span.style.transform = `skewY(${90 - sliceAngle / 2}deg) rotate(${sliceAngle / 2}deg)`;
+                slice.appendChild(span);
+                elements.spinner.appendChild(slice);
+            });
+        }
+        // Logika Spin
+        function spinRoulette() {
+            if (isSpinning) return;
+
+            // Mengonversi input taruhan ke BigInt
+            const bet = BigInt(elements.betInput.value); 
+            if (isNaN(Number(bet)) || bet <= 0n) { // Menggunakan Number(bet) untuk cek isNaN karena isNaN tidak mendukung BigInt
+                setMessage(elements.resultDisplay, 'Taruhan harus angka positif!', 'error');
+                return;
+            }
+            if (currentCoins < bet) {
+                setMessage(elements.resultDisplay, 'Coin tidak cukup untuk taruhan ini!', 'error');
+                return;
+            }
+
+            currentCoins -= bet;
+            updateCoinDisplay();
+            saveGameData();
+
+            setMessage(elements.resultDisplay, 'Memutar...', '');
+            toggleControls(true); // Disable controls
+            isSpinning = true;
+
+            let randomIndex;
+            // Logika Kapsul Keberuntungan (dihilangkan untuk VIP, tapi saya biarkan kalau ada rencana lain)
+            // if (activeLuckBoostRounds > 0) {
+            //     const nonZonkPrizes = prizes.filter(p => p.type !== 'zonk');
+            //     if (nonZonkPrizes.length > 0) {
+            //         randomIndex = prizes.indexOf(nonZonkPrizes[Math.floor(Math.random() * nonZonkPrizes.length)]);
+            //     } else {
+            //         randomIndex = Math.floor(Math.random() * prizes.length); 
+            //     }
+            //     activeLuckBoostRounds--; 
+            //     saveGameData(); 
+            // } else {
+                randomIndex = Math.floor(Math.random() * prizes.length);
+            // }
+
+            const targetPrize = prizes[randomIndex];
+
+            const baseRotation = 360 * Math.floor(Math.random() * 6) + 360 * 5;
+            const targetRotation = baseRotation - (randomIndex * (360 / prizes.length)) - ((360 / prizes.length) / 2);
+
+            elements.spinner.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
+            elements.spinner.style.transform = `rotate(${targetRotation}deg)`;
+
+            elements.spinner.addEventListener('transitionend', () => handleSpinEnd(bet, targetPrize, targetRotation), { once: true });
+        }
+
+        function handleSpinEnd(bet, finalPrize, finalRotation) {
+            isSpinning = false;
+            toggleControls(false); // Enable controls
+
+            // Reset transition and apply final rotation without transition for snappy stop
+            elements.spinner.style.transition = 'none';
+            const actualRotation = finalRotation % 360;
+            elements.spinner.style.transform = `rotate(${actualRotation}deg)`;
+
+            let winnings = 0n; // Menggunakan BigInt
+            let messageText = '';
+            let messageClass = '';
+            let earningsFromSpin = 0n; // Menggunakan BigInt
+
+            if (finalPrize.type === 'multiplier') {
+                winnings = bet * BigInt(finalPrize.value); // Kalikan BigInt dengan BigInt
+                currentCoins += winnings;
+                earningsFromSpin = winnings;
+                messageText = `SELAMAT! Anda mendapatkan ${finalPrize.label}! Total kemenangan: ${winnings.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} coin.`;
+                messageClass = 'success';
+            } else if (finalPrize.type === 'bonus') {
+                winnings = BigInt(finalPrize.value); // Konversi ke BigInt
+                currentCoins += winnings;
+                earningsFromSpin = winnings; 
+                messageText = `SELAMAT! Anda mendapatkan bonus ${winnings.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} coin!`;
+                messageClass = 'success';
+            } else { // ZONK
+                messageText = `ZONK! Anda kehilangan ${bet.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} coin. Coba lagi!`;
+                messageClass = 'error';
+            }
+
+            // Update highestSpinEarnings jika kemenangan murni lebih tinggi
+            if (earningsFromSpin > highestSpinEarnings) {
+                highestSpinEarnings = earningsFromSpin;
+                updateHighestSpinEarningsDisplay();
+            }
+
+            // Tambahkan ke totalSpinWinnings (hanya jika ada kemenangan)
+            if (earningsFromSpin > 0n) { // Bandingkan dengan BigInt 0
+                totalSpinWinnings += earningsFromSpin;
+                checkAndUpdateHighestRank(); // Cek dan update rank
+                updateRankDisplays();
+            }
+
+            setMessage(elements.resultDisplay, messageText, messageClass);
+            updateCoinDisplay();
+            saveGameData();
+        }
+
+        // Utility untuk mengatur pesan
+        function setMessage(element, text, type) {
+            element.textContent = text;
+            element.className = `message ${type}`;
+        }
+
+        // Utility untuk mengaktifkan/menonaktifkan kontrol
+        function toggleControls(disable) {
+            elements.spinButton.disabled = disable;
+            elements.betInput.disabled = disable;
+            elements.maxBetButton.disabled = disable;
+        }
+
+        // --- Logika Toko ---
+        function renderShopItems() {
+            elements.shopItemsContainer.innerHTML = ''; // Bersihkan kontainer
+            elements.shopMessage.textContent = ''; // Bersihkan pesan toko
+
+            const vipItem = shopItems.find(item => item.id === 'vip1000'); // Hanya satu item
+
+            if (vipItem) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'shop-item';
+
+                const isOwned = isVIPActive; // Cek langsung status VIP
+                const requiredRank = ranks[ranks.length - 1].name; // Rank paling tinggi
+                const hasReachedHighestRank = (highestAchievedRank === requiredRank);
+                const canAfford = currentCoins >= vipItem.price;
+                const isDisabled = !hasReachedHighestRank || !canAfford || isOwned;
+
+                let buttonText = 'Beli Sekarang';
+                let statusText = '';
+
+                if (isOwned) {
+                    buttonText = 'Sudah Dimiliki';
+                    statusText = 'Selamat! Anda adalah Anggota VIP!';
+                } else if (!hasReachedHighestRank) {
+                    buttonText = 'Capai Rank Tertinggi Dulu';
+                    statusText = `Syarat: Capai Rank "${requiredRank}"`;
+                } else if (!canAfford) {
+                    buttonText = 'Koin Kurang';
+                    statusText = `Syarat: ${vipItem.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} Coin`;
+                }
+
+
+                itemDiv.innerHTML = `
+                    <h3>${vipItem.name}</h3>
+                    <p>${vipItem.description}</p>
+                    <div class="price">${vipItem.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} Coin</div>
+                    <button id="buy-${vipItem.id}" ${isDisabled ? 'disabled' : ''}>
+                        ${buttonText}
+                    </button>
+                    ${statusText ? `<span class="owned-text">${statusText}</span>` : ''}
+                `;
+                elements.shopItemsContainer.appendChild(itemDiv);
+
+                const buyButton = document.getElementById(`buy-${vipItem.id}`);
+                if (buyButton) {
+                    buyButton.addEventListener('click', () => buyItem(vipItem.id));
+                }
+            }
+        }
+
+        function buyItem(itemId) {
+            const item = shopItems.find(i => i.id === itemId);
+            if (!item) {
+                setMessage(elements.shopMessage, 'Item tidak ditemukan!', 'error');
+                return;
+            }
+
+            const requiredRank = ranks[ranks.length - 1].name;
+            const hasReachedHighestRank = (highestAchievedRank === requiredRank);
+
+            if (!hasReachedHighestRank) {
+                setMessage(elements.shopMessage, `Anda harus mencapai Rank "${requiredRank}" terlebih dahulu!`, 'error');
+                return;
+            }
+
+            if (currentCoins < item.price) {
+                setMessage(elements.shopMessage, 'Koin Anda tidak cukup!', 'error');
+                return;
+            }
+
+            if (isVIPActive) { // Cek status VIP
+                 setMessage(elements.shopMessage, 'Anda sudah menjadi Anggota VIP!', 'error');
+                 return;
+            }
+
+            currentCoins -= item.price;
+            isVIPActive = true; // Aktifkan status VIP
+            
+            updateCoinDisplay();
+            saveGameData();
+            renderShopItems(); // Render ulang toko untuk update status tombol
+            updateRankDisplays(); // Perbarui tampilan VIP
+            setMessage(elements.shopMessage, `Selamat! Anda berhasil membeli ${item.name}!`, 'success');
+        }
+
+
+        // --- Event Listeners ---
+
+        // Fitur Baru: MAX BET
+        elements.maxBetButton.addEventListener('click', () => {
+            elements.betInput.value = currentCoins.toString(); // Konversi BigInt ke string untuk input
+            setMessage(elements.resultDisplay, 'Taruhan diatur ke maksimal coin Anda.', '');
+        });
+
+        document.getElementById('redeemSubmit').addEventListener('click', () => {
+            const code = elements.redeemCodeInput.value.trim();
+            setMessage(elements.redeemMessage, '', '');
+
+            if (code === 'Mora Kaya') {
+                if (!hasRedeemedMoraKaya) {
+                    const bonusCoins = 98000000n; // Pastikan ini BigInt
+                    currentCoins += bonusCoins;
+                    hasRedeemedMoraKaya = true;
+                    updateCoinDisplay();
+                    saveGameData();
+                    setMessage(elements.redeemMessage, `Selamat! Anda mendapatkan ${bonusCoins.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} coin!`, 'success');
+                } else {
+                    setMessage(elements.redeemMessage, 'Kode "Mora Kaya" sudah pernah ditukarkan.', 'error');
+                }
+            } else {
+                setMessage(elements.redeemMessage, 'Kode redeem tidak valid.', 'error');
+            }
+            elements.redeemCodeInput.value = '';
+        });
+
+        document.getElementById('topUpSubmit').addEventListener('click', () => {
+            // Gunakan try-catch untuk BigInt(string) agar lebih robust
+            let amount;
+            try {
+                amount = BigInt(elements.topUpAmountInput.value);
+            } catch (e) {
+                setMessage(elements.topUpMessage, 'Jumlah top up tidak valid!', 'error');
+                return;
+            }
+            
+            setMessage(elements.topUpMessage, '', '');
+
+            if (amount <= 0n) { // Bandingkan dengan BigInt 0
+                setMessage(elements.topUpMessage, 'Jumlah top up harus angka positif!', 'error');
+                return;
+            }
+
+            currentCoins += amount;
+            updateCoinDisplay();
+            saveGameData();
+            setMessage(elements.topUpMessage, `Berhasil top up ${amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")} coin!`, 'success');
+            elements.topUpAmountInput.value = '';
+        });
+
+        // Inisialisasi saat DOM siap
+        document.addEventListener('DOMContentLoaded', () => {
+            loadGameData(); // Muat data game saat halaman dimuat
+            createRouletteSlices(); // Buat roda
+            updateAllDisplays(); // Pastikan semua display diperbarui saat startup
+            elements.spinButton.addEventListener('click', spinRoulette);
+            showPage('mainGamePage'); // Tampilkan halaman game utama saat startup
+        });
+    </script>
+</body>
+</html>
